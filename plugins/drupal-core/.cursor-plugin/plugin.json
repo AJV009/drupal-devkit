@@ -1,0 +1,15 @@
+{
+  "name": "drupal-core",
+  "displayName": "Drupal Core DevKit",
+  "description": "35 curated Drupal development skills — coding standards, testing, security, entity API, Views, JSON:API, SDC, accessibility, and more",
+  "version": "1.0.0",
+  "author": {
+    "name": "FreelyGive"
+  },
+  "homepage": "https://github.com/AJV009/drupal-devkit",
+  "license": "MIT",
+  "keywords": ["drupal", "ddev", "testing", "security", "accessibility", "views", "json-api", "sdc"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "hooks": "./hooks/hooks-cursor.json"
+}

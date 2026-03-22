@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "drush-mcp": {
+      "command": "npx",
+      "args": ["-y", "@nicobrinkkemper/drush-mcp"],
+      "description": "Drush commands via MCP — run drush commands without leaving the AI session"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp", "--headless"],
+      "description": "Browser automation for visual testing and Drupal admin UI interaction"
+    }
+  }
+}

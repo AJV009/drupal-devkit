@@ -1,0 +1,19 @@
+{
+  "name": "drupal-core",
+  "version": "1.0.0",
+  "description": "35 curated Drupal development skills from the community — coding standards, testing, security, entity API, Views, JSON:API, SDC, accessibility, and more",
+  "author": {
+    "name": "FreelyGive"
+  },
+  "license": "MIT",
+  "keywords": [
+    "drupal",
+    "ddev",
+    "testing",
+    "security",
+    "accessibility",
+    "views",
+    "json-api",
+    "sdc"
+  ]
+}

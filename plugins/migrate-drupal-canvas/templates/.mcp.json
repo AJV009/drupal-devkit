@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "storybook": {
+      "type": "http",
+      "url": "http://efi-ed.ddev.site/mcp"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@playwright/mcp", "--headless", "--no-sandbox", "--isolated"],
+      "env": {}
+    }
+  }
+}

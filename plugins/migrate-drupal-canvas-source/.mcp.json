@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp", "--headless", "--no-sandbox", "--isolated"],
+      "description": "Browser automation for source site crawling, Storybook testing, CSS extraction, and visual QA"
+    }
+  }
+}

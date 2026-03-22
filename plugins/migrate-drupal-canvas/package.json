@@ -1,0 +1,21 @@
+{
+  "name": "migrate-drupal-canvas",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Full site migration orchestrator for Drupal CMS with Canvas — 16 agents, 8-phase workflow",
+  "author": "FreelyGive <hello@freelygive.org>",
+  "license": "MIT",
+  "homepage": "https://github.com/AJV009/drupal-devkit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AJV009/drupal-devkit.git",
+    "directory": "plugins/migrate-drupal-canvas"
+  },
+  "keywords": [
+    "drupal",
+    "canvas",
+    "migration",
+    "claude-code",
+    "orchestrator"
+  ]
+}

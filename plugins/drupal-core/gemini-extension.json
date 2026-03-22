@@ -1,0 +1,6 @@
+{
+  "name": "drupal-core",
+  "description": "36 curated Drupal development skills — coding standards, testing, security, entity API, Views, JSON:API, SDC, accessibility",
+  "version": "1.0.0",
+  "contextFileName": "GEMINI.md"
+}

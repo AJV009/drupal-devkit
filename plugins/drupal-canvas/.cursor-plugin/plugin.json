@@ -1,0 +1,15 @@
+{
+  "name": "drupal-canvas",
+  "displayName": "Drupal Canvas DevKit",
+  "description": "Canvas Code Component development skills — React 19, Tailwind 4, CVA, Storybook, content management, and project setup",
+  "version": "1.0.0",
+  "author": {
+    "name": "FreelyGive"
+  },
+  "homepage": "https://github.com/AJV009/drupal-devkit",
+  "license": "MIT",
+  "keywords": ["drupal", "canvas", "experience-builder", "react", "tailwind", "storybook", "components"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "hooks": "./hooks/hooks-cursor.json"
+}

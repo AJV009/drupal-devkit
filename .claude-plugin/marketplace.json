@@ -1,0 +1,35 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "drupal-devkit",
+  "description": "Drupal development skills, agents, and MCP configs for AI-assisted Drupal development",
+  "owner": {
+    "name": "FreelyGive",
+    "email": "hello@freelygive.org"
+  },
+  "plugins": [
+    {
+      "name": "drupal-core",
+      "description": "35 curated Drupal development skills — coding standards, testing, security, entity API, Views, JSON:API, SDC, accessibility, and more",
+      "source": "./plugins/drupal-core",
+      "category": "development"
+    },
+    {
+      "name": "drupal-canvas",
+      "description": "Canvas Code Component development — React 19, Tailwind 4, CVA, Storybook, content management, and project setup",
+      "source": "./plugins/drupal-canvas",
+      "category": "development"
+    },
+    {
+      "name": "migrate-drupal-canvas",
+      "description": "Site migration orchestrator for Drupal CMS + Canvas — 16 agents, 8-phase workflow from site analysis to visual verification",
+      "source": "./plugins/migrate-drupal-canvas",
+      "category": "development"
+    },
+    {
+      "name": "migrate-drupal-canvas-source",
+      "description": "Site migration orchestrator for Acquia Source + Canvas — 15 agents, 8-phase workflow from site analysis to visual verification",
+      "source": "./plugins/migrate-drupal-canvas-source",
+      "category": "development"
+    }
+  ]
+}

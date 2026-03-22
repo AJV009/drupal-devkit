@@ -1,0 +1,18 @@
+{
+  "name": "migrate-drupal-canvas-source",
+  "version": "1.0.0",
+  "description": "Full site migration orchestrator for Acquia Source with Canvas — 15 specialized agents, 8-phase workflow from site analysis through content deployment to final visual verification",
+  "author": {
+    "name": "FreelyGive"
+  },
+  "license": "MIT",
+  "keywords": [
+    "drupal",
+    "canvas",
+    "migration",
+    "acquia-source",
+    "orchestrator",
+    "react",
+    "storybook"
+  ]
+}

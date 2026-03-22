@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp", "--headless"],
+      "description": "Browser automation for Storybook visual testing and source site inspection"
+    },
+    "storybook": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/storybook-mcp"],
+      "description": "Storybook component navigation and inspection"
+    }
+  }
+}

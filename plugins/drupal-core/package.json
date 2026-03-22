@@ -1,0 +1,27 @@
+{
+  "name": "drupal-core",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "36 curated Drupal development skills — coding standards, testing, security, entity API, Views, JSON:API, SDC, accessibility, and more",
+  "author": "FreelyGive <hello@freelygive.org>",
+  "license": "MIT",
+  "homepage": "https://github.com/AJV009/drupal-devkit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AJV009/drupal-devkit.git",
+    "directory": "plugins/drupal-core"
+  },
+  "keywords": [
+    "drupal",
+    "claude-code",
+    "cursor",
+    "gemini",
+    "kiro",
+    "skills",
+    "ai-coding",
+    "ddev",
+    "testing",
+    "security",
+    "accessibility"
+  ]
+}

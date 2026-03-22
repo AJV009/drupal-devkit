@@ -1,0 +1,29 @@
+{
+  "name": "drupal-canvas",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Canvas Code Component development skills — React 19, Tailwind 4, CVA, Storybook, content management, and project setup",
+  "author": "FreelyGive <hello@freelygive.org>",
+  "license": "MIT",
+  "homepage": "https://github.com/AJV009/drupal-devkit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AJV009/drupal-devkit.git",
+    "directory": "plugins/drupal-canvas"
+  },
+  "keywords": [
+    "drupal",
+    "canvas",
+    "experience-builder",
+    "claude-code",
+    "cursor",
+    "gemini",
+    "kiro",
+    "skills",
+    "ai-coding",
+    "react",
+    "tailwind",
+    "storybook",
+    "components"
+  ]
+}
