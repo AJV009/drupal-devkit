@@ -44,13 +44,13 @@ if [ ${#DESC} -gt 256 ]; then
 fi
 
 # name collision: check against bundled plugins
-if echo "$BUNDLED_NAMES" | jq -e "index(\"$NAME\")" >/dev/null 2>&1; then
+if echo "$BUNDLED_NAMES" | jq -e --arg name "$NAME" 'index($name)' >/dev/null 2>&1; then
   echo "ERROR: name collides with bundled plugin: $NAME"
   exit 1
 fi
 
 # name collision: check against other community plugins
-if echo "$COMMUNITY_NAMES" | jq -e "index(\"$NAME\")" >/dev/null 2>&1; then
+if echo "$COMMUNITY_NAMES" | jq -e --arg name "$NAME" 'index($name)' >/dev/null 2>&1; then
   echo "ERROR: name collides with another community plugin: $NAME"
   exit 1
 fi
