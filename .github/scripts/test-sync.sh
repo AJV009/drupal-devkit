@@ -57,6 +57,57 @@ assert_fail "name over 64 chars fails" bash -c "echo '{\"name\":\"$LONG_NAME\",\
 LONG_DESC=$(printf 'x%.0s' $(seq 1 257))
 assert_fail "description over 256 chars fails" bash -c "echo '{\"name\":\"test-plugin\",\"repo\":\"user/repo\",\"description\":\"$LONG_DESC\",\"author\":\"Test\",\"license\":\"MIT\",\"category\":\"development\"}' | $SCRIPT_DIR/validate-registry-entry.sh '$BUNDLED' '$COMMUNITY'"
 
+# --- Plugin repo validation tests ---
+
+# Create a valid fixture plugin repo
+FIXTURE_DIR=$(mktemp -d)
+mkdir -p "$FIXTURE_DIR/valid-plugin/.claude-plugin"
+echo '{"name": "valid-plugin", "version": "1.0.0"}' > "$FIXTURE_DIR/valid-plugin/.claude-plugin/plugin.json"
+mkdir -p "$FIXTURE_DIR/valid-plugin/skills/test-skill"
+cat > "$FIXTURE_DIR/valid-plugin/skills/test-skill/SKILL.md" << 'SKILLEOF'
+---
+name: test-skill
+description: A test skill
+---
+Test skill content.
+SKILLEOF
+touch "$FIXTURE_DIR/valid-plugin/LICENSE"
+
+# Create a fixture with no skills/agents/commands/hooks
+mkdir -p "$FIXTURE_DIR/empty-plugin/.claude-plugin"
+echo '{"name": "empty-plugin", "version": "1.0.0"}' > "$FIXTURE_DIR/empty-plugin/.claude-plugin/plugin.json"
+touch "$FIXTURE_DIR/empty-plugin/LICENSE"
+
+# Create a fixture with name mismatch
+mkdir -p "$FIXTURE_DIR/mismatch-plugin/.claude-plugin"
+echo '{"name": "wrong-name", "version": "1.0.0"}' > "$FIXTURE_DIR/mismatch-plugin/.claude-plugin/plugin.json"
+mkdir -p "$FIXTURE_DIR/mismatch-plugin/skills/s1"
+printf -- "---\nname: s1\ndescription: s\n---\nContent" > "$FIXTURE_DIR/mismatch-plugin/skills/s1/SKILL.md"
+touch "$FIXTURE_DIR/mismatch-plugin/LICENSE"
+
+# Create a fixture with invalid hooks.json
+mkdir -p "$FIXTURE_DIR/bad-hooks-plugin/.claude-plugin"
+echo '{"name": "bad-hooks-plugin", "version": "1.0.0"}' > "$FIXTURE_DIR/bad-hooks-plugin/.claude-plugin/plugin.json"
+mkdir -p "$FIXTURE_DIR/bad-hooks-plugin/skills/s1"
+printf -- "---\nname: s1\ndescription: s\n---\nContent" > "$FIXTURE_DIR/bad-hooks-plugin/skills/s1/SKILL.md"
+mkdir -p "$FIXTURE_DIR/bad-hooks-plugin/hooks"
+echo 'not valid json{' > "$FIXTURE_DIR/bad-hooks-plugin/hooks/hooks.json"
+touch "$FIXTURE_DIR/bad-hooks-plugin/LICENSE"
+
+# Create a fixture with no LICENSE
+mkdir -p "$FIXTURE_DIR/no-license-plugin/.claude-plugin"
+echo '{"name": "no-license-plugin", "version": "1.0.0"}' > "$FIXTURE_DIR/no-license-plugin/.claude-plugin/plugin.json"
+mkdir -p "$FIXTURE_DIR/no-license-plugin/skills/s1"
+printf -- "---\nname: s1\ndescription: s\n---\nContent" > "$FIXTURE_DIR/no-license-plugin/skills/s1/SKILL.md"
+
+assert_pass "valid plugin repo passes" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/valid-plugin" "valid-plugin"
+assert_fail "empty plugin (no skills/agents) fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/empty-plugin" "empty-plugin"
+assert_fail "name mismatch fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/mismatch-plugin" "mismatch-plugin"
+assert_fail "invalid hooks.json fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/bad-hooks-plugin" "bad-hooks-plugin"
+assert_fail "missing LICENSE fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/no-license-plugin" "no-license-plugin"
+
+rm -rf "$FIXTURE_DIR"
+
 # --- INSERT ADDITIONAL TESTS ABOVE THIS LINE ---
 
 echo ""
