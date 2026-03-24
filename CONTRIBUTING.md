@@ -26,6 +26,32 @@ If you want to include an existing community skill:
 3. Add attribution to `ATTRIBUTION.md`
 4. Open a PR
 
+## Submitting a Community Plugin
+
+If you maintain a Claude Code plugin for Drupal and want it listed in the drupal-devkit marketplace:
+
+1. Ensure your plugin repo has:
+   - `.claude-plugin/plugin.json` with a `name` field
+   - At least one of: `skills/`, `agents/`, `commands/`, or `hooks/`
+   - A `LICENSE` file
+   - Valid YAML frontmatter in all `SKILL.md` files
+2. Open a PR adding your plugin to `community-registry.json`:
+   ```json
+   {
+     "name": "your-plugin-name",
+     "repo": "your-github-user/your-repo",
+     "description": "Brief description (max 256 chars)",
+     "author": "Your Name",
+     "license": "MIT",
+     "category": "development"
+   }
+   ```
+3. The `name` must be kebab-case, max 64 characters, and must not collide with existing plugins
+4. After merge, a GitHub Action validates your repo and adds it to the marketplace
+5. A weekly health check verifies your repo remains accessible and valid
+
+Your plugin stays in your repo — you maintain full control and can iterate freely.
+
 ## Reporting Issues
 
 Open an issue on this repository describing the problem, including which skill is affected.
