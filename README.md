@@ -127,6 +127,24 @@ Same 8-phase workflow adapted for Acquia Source (SaaS) instead of self-hosted Dr
 /migrate-drupal-canvas-source:migrate-site https://source-site.com
 ```
 
+## Community Plugins
+
+Community-maintained plugins available through the drupal-devkit marketplace:
+
+| Plugin | Author | Description |
+|--------|--------|-------------|
+| **drupal-workflow** | George Kastanis | 3-layer semantic docs, structural index generators, quality gate hooks, and 4 specialized agents |
+
+Install community plugins the same way as bundled plugins:
+
+```bash
+/plugin install drupal-workflow@drupal-devkit
+```
+
+### Submit Your Plugin
+
+Want to list your plugin here? See [CONTRIBUTING.md](CONTRIBUTING.md#submitting-a-community-plugin) for instructions. You submit a ~6-line JSON entry — your code stays in your repo.
+
 ## Attribution
 
 This marketplace aggregates skills from multiple open-source contributors. See [ATTRIBUTION.md](ATTRIBUTION.md) for full credits.
