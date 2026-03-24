@@ -1,0 +1,106 @@
+name: Sync Community Plugins
+
+on:
+  push:
+    branches: [main]
+    paths: [community-registry.json]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Monday at 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: community-plugin-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Make scripts executable
+        run: chmod +x .github/scripts/*.sh
+
+      - name: Extract bundled plugin names
+        id: bundled
+        run: |
+          NAMES=$(jq -c '[.plugins[] | select(.source | type == "string") | .name]' .claude-plugin/marketplace.json)
+          echo "names=$NAMES" >> "$GITHUB_OUTPUT"
+
+      - name: Validate and update registry entries
+        run: |
+          REGISTRY="community-registry.json"
+          BUNDLED='${{ steps.bundled.outputs.names }}'
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          PLUGIN_COUNT=$(jq '.plugins | length' "$REGISTRY")
+
+          for i in $(seq 0 $((PLUGIN_COUNT - 1))); do
+            ENTRY=$(jq ".plugins[$i]" "$REGISTRY")
+            NAME=$(echo "$ENTRY" | jq -r '.name')
+            REPO=$(echo "$ENTRY" | jq -r '.repo')
+
+            echo "--- Validating: $NAME ($REPO) ---"
+
+            # Build list of other community names (excluding current)
+            COMMUNITY_NAMES=$(jq -c "[.plugins[] | select(.name != \"$NAME\") | .name]" "$REGISTRY")
+
+            # Step 1: Validate registry entry schema
+            ENTRY_ONLY=$(echo "$ENTRY" | jq '{name, repo, description, author, license, category}')
+            if ! echo "$ENTRY_ONLY" | .github/scripts/validate-registry-entry.sh "$BUNDLED" "$COMMUNITY_NAMES"; then
+              echo "  Registry entry validation FAILED"
+              PREV_FAILED=$(echo "$ENTRY" | jq -r '.last_failed // empty')
+              FAILED_TS="${PREV_FAILED:-$NOW}"
+              jq ".plugins[$i].enabled = false | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = \"$FAILED_TS\"" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+              continue
+            fi
+
+            # Step 2: Shallow clone and validate plugin repo
+            CLONE_DIR=$(mktemp -d)
+            if ! timeout 60 git clone --depth 1 "https://github.com/$REPO.git" "$CLONE_DIR/repo" 2>/dev/null; then
+              echo "  Clone FAILED (repo inaccessible or timeout)"
+              PREV_FAILED=$(echo "$ENTRY" | jq -r '.last_failed // empty')
+              FAILED_TS="${PREV_FAILED:-$NOW}"
+              jq ".plugins[$i].enabled = false | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = \"$FAILED_TS\"" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+              rm -rf "$CLONE_DIR"
+              continue
+            fi
+
+            if ! .github/scripts/validate-plugin-repo.sh "$CLONE_DIR/repo" "$NAME"; then
+              echo "  Plugin repo validation FAILED"
+              PREV_FAILED=$(echo "$ENTRY" | jq -r '.last_failed // empty')
+              FAILED_TS="${PREV_FAILED:-$NOW}"
+              jq ".plugins[$i].enabled = false | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = \"$FAILED_TS\"" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+              rm -rf "$CLONE_DIR"
+              continue
+            fi
+
+            rm -rf "$CLONE_DIR"
+
+            # Passed all checks
+            echo "  PASSED"
+            jq ".plugins[$i].enabled = true | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = null" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+          done
+
+      - name: Sync marketplace.json
+        run: .github/scripts/sync-marketplace.sh community-registry.json .claude-plugin/marketplace.json
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add community-registry.json .claude-plugin/marketplace.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: sync community plugins [skip ci]"
+            git push
+          fi
