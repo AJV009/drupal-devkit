@@ -1,0 +1,15 @@
+{
+  "plugins": [
+    {
+      "name": "drupal-workflow",
+      "repo": "gkastanis/drupal-workflow",
+      "description": "3-layer semantic docs, structural index generators, quality gate hooks, and 4 specialized agents",
+      "author": "George Kastanis",
+      "license": "MIT",
+      "category": "development",
+      "enabled": null,
+      "last_checked": null,
+      "last_failed": null
+    }
+  ]
+}
