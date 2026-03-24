@@ -108,6 +108,57 @@ assert_fail "missing LICENSE fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXT
 
 rm -rf "$FIXTURE_DIR"
 
+# --- Marketplace sync tests ---
+
+SYNC_DIR=$(mktemp -d)
+
+# Create a test marketplace.json with only bundled plugins
+cat > "$SYNC_DIR/marketplace.json" << 'MKEOF'
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "drupal-devkit",
+  "owner": {"name": "FreelyGive"},
+  "plugins": [
+    {"name": "drupal-core", "source": "./plugins/drupal-core", "category": "development"}
+  ]
+}
+MKEOF
+
+# Create a registry with one enabled plugin
+cat > "$SYNC_DIR/registry.json" << 'REGEOF'
+{
+  "plugins": [
+    {
+      "name": "drupal-workflow",
+      "repo": "gkastanis/drupal-workflow",
+      "description": "Test plugin",
+      "author": "Test",
+      "license": "MIT",
+      "category": "development",
+      "enabled": true,
+      "last_checked": "2026-03-25T00:00:00Z",
+      "last_failed": null
+    }
+  ]
+}
+REGEOF
+
+# Sync should add the community plugin
+"$SCRIPT_DIR/sync-marketplace.sh" "$SYNC_DIR/registry.json" "$SYNC_DIR/marketplace.json"
+COMMUNITY_COUNT=$(jq '[.plugins[] | select(.source | type == "object")] | length' "$SYNC_DIR/marketplace.json")
+BUNDLED_COUNT=$(jq '[.plugins[] | select(.source | type == "string")] | length' "$SYNC_DIR/marketplace.json")
+assert_pass "sync adds community plugin" [ "$COMMUNITY_COUNT" -eq 1 ]
+assert_pass "sync preserves bundled plugin" [ "$BUNDLED_COUNT" -eq 1 ]
+
+# Now disable the plugin and re-sync — should remove it
+jq '.plugins[0].enabled = false' "$SYNC_DIR/registry.json" > "$SYNC_DIR/registry2.json"
+"$SCRIPT_DIR/sync-marketplace.sh" "$SYNC_DIR/registry2.json" "$SYNC_DIR/marketplace.json"
+COMMUNITY_AFTER=$(jq '[.plugins[] | select(.source | type == "object")] | length' "$SYNC_DIR/marketplace.json")
+assert_pass "sync removes disabled community plugin" [ "$COMMUNITY_AFTER" -eq 0 ]
+assert_pass "sync still preserves bundled plugin" [ "$(jq '[.plugins[] | select(.source | type == "string")] | length' "$SYNC_DIR/marketplace.json")" -eq 1 ]
+
+rm -rf "$SYNC_DIR"
+
 # --- INSERT ADDITIONAL TESTS ABOVE THIS LINE ---
 
 echo ""
