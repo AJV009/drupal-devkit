@@ -53,21 +53,34 @@ File: `.github/workflows/sync-community-plugins.yml`
 
 | Trigger | Behavior |
 |---------|----------|
-| Any push to `main` | Full validation run on ALL entries |
+| Push to `main` that modifies `community-registry.json` | Full validation run on ALL entries |
 | Weekly schedule | Full validation run on ALL entries |
 | Manual dispatch | Full validation run on ALL entries |
 
-No special-casing. Every trigger does the same thing.
+The push trigger uses a `paths:` filter on `community-registry.json` only — README edits, bundled plugin changes, etc. do not trigger the action. Weekly schedule covers staleness detection for all other cases.
 
-**Validation flow per entry:**
+**Concurrency:** The action uses `concurrency: {group: "community-plugin-sync", cancel-in-progress: false}` to prevent overlapping runs from racing on commits.
 
-1. Clone repo to temp dir
+**Infinite loop prevention:** The action commits using `github-actions[bot]` and skips execution when `github.actor == 'github-actions[bot]'`. This prevents the action's own commits from re-triggering itself.
+
+**Registry entry validation (before cloning):**
+
+1. All required fields present: `name`, `repo`, `description`, `author`, `license`, `category`
+2. `name` is kebab-case, max 64 characters
+3. `repo` matches `owner/repo` pattern
+4. `name` does not collide with any bundled plugin or other community entry
+5. `description` is non-empty, max 256 characters
+
+**Plugin repo validation (after cloning):**
+
+1. Shallow clone (`--depth 1`) with 60-second timeout per repo
 2. Check repo exists and is publicly accessible
 3. `.claude-plugin/plugin.json` exists and is valid JSON with `name` field
-4. Has at least one of: `skills/`, `agents/`, `commands/`, `hooks/`
-5. SKILL.md files have valid YAML frontmatter
-6. `hooks/hooks.json` is valid JSON (if present)
-7. License present
+4. `name` in remote plugin.json matches the registry entry `name`
+5. Has at least one of: `skills/`, `agents/`, `commands/`, `hooks/`
+6. SKILL.md files have valid YAML frontmatter
+7. `hooks/hooks.json` is valid JSON (if present)
+8. License present in repo
 
 **On validation result:**
 
@@ -81,6 +94,8 @@ No special-casing. Every trigger does the same thing.
 - Commit updated `community-registry.json` and `.claude-plugin/marketplace.json`
 
 The action never touches bundled plugins (drupal-core, drupal-canvas, etc.).
+
+**Plugin removal:** Removing an entry from `community-registry.json` via PR causes the action to remove the corresponding marketplace.json entry on the next run.
 
 ### Updated marketplace.json
 
@@ -186,6 +201,8 @@ Claude Code handles cloning, caching to `~/.claude/plugins/cache`, and updates a
 ## Out of Scope
 
 - npm source support (can be added later per entry)
-- Version pinning (external authors manage their own versioning)
+- Version pinning / ref targeting (external authors manage their own versioning; default branch is used)
 - Plugin dependency resolution between community plugins
 - Automated PR creation for new community submissions
+- PR-time validation check (future enhancement — currently validation runs post-merge)
+- Escalation policy for long-failing plugins (tracked via `last_failed` but no automated action yet)
