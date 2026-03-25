@@ -1,0 +1,97 @@
+<h2>Issue Type</h2>
+
+<p><em>Select one and remove the others.</em></p>
+
+<ul>
+  <li><strong>Community Plugin Submission</strong></li>
+  <li><strong>Skill Contribution</strong></li>
+  <li><strong>Bug Report</strong></li>
+  <li><strong>Feature Request</strong></li>
+</ul>
+
+<hr />
+
+<h2>Community Plugin Submission</h2>
+
+<table>
+  <tr><td><strong>Plugin name</strong></td><td><code>your-plugin-name</code></td></tr>
+  <tr><td><strong>Repository</strong></td><td>https://github.com/your-user/your-repo</td></tr>
+  <tr><td><strong>License</strong></td><td>MIT / GPL-2.0 / Apache-2.0</td></tr>
+</table>
+
+<h3>Checklist</h3>
+
+<ul>
+  <li>[ ] Plugin repo has <code>.claude-plugin/plugin.json</code> with a <code>name</code> field</li>
+  <li>[ ] Plugin has at least one of: <code>skills/</code>, <code>agents/</code>, <code>commands/</code>, or <code>hooks/</code></li>
+  <li>[ ] Plugin has a <code>LICENSE</code> file or a <code>license</code> field in <code>plugin.json</code></li>
+  <li>[ ] All <code>SKILL.md</code> files have valid YAML frontmatter</li>
+  <li>[ ] Name is kebab-case, max 64 characters, and doesn't collide with existing plugins</li>
+</ul>
+
+<h3>About the Plugin</h3>
+
+<p><em>Brief description of what your plugin does and who it's for.</em></p>
+
+<hr />
+
+<h2>Skill Contribution</h2>
+
+<table>
+  <tr><td><strong>Skill name</strong></td><td><code>your-skill-name</code></td></tr>
+  <tr><td><strong>Target plugin</strong></td><td>drupal-core / drupal-canvas / other</td></tr>
+</table>
+
+<h3>Checklist</h3>
+
+<ul>
+  <li>[ ] <code>SKILL.md</code> follows the <a href="https://agentskills.io/specification">agentskills.io specification</a></li>
+  <li>[ ] Skill is platform-agnostic (no references to specific AI tools)</li>
+  <li>[ ] Skill is standalone (works without project-specific context)</li>
+  <li>[ ] Attribution added to <code>ATTRIBUTION.md</code> if derived from other work</li>
+</ul>
+
+<h3>What This Skill Does</h3>
+
+<p><em>Brief description of the skill and the Drupal domain it covers.</em></p>
+
+<hr />
+
+<h2>Bug Report</h2>
+
+<table>
+  <tr><td><strong>Affected plugin</strong></td><td>drupal-core / drupal-canvas / migrate-drupal-canvas / community plugin name</td></tr>
+  <tr><td><strong>Affected skill or agent</strong></td><td><code>skill-or-agent-name</code></td></tr>
+  <tr><td><strong>Platform</strong></td><td>Claude Code / Cursor / Gemini CLI / Kiro CLI</td></tr>
+</table>
+
+<h3>Steps to Reproduce</h3>
+
+<ol>
+  <li>...</li>
+  <li>...</li>
+</ol>
+
+<h3>Expected Behavior</h3>
+
+<p><em>What should happen.</em></p>
+
+<h3>Actual Behavior</h3>
+
+<p><em>What actually happens.</em></p>
+
+<hr />
+
+<h2>Feature Request</h2>
+
+<table>
+  <tr><td><strong>Related plugin</strong></td><td>drupal-core / drupal-canvas / new plugin / general</td></tr>
+</table>
+
+<h3>Description</h3>
+
+<p><em>What do you want added or changed?</em></p>
+
+<h3>Use Case</h3>
+
+<p><em>What problem does this solve? What workflow does it improve?</em></p>

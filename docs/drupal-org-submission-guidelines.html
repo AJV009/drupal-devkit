@@ -1,0 +1,105 @@
+<h2>Contributing to Drupal DevKit</h2>
+
+<p>There are three ways to contribute to Drupal DevKit:</p>
+
+<ol>
+  <li><strong>Submit a community plugin</strong> &mdash; list your own plugin in our marketplace (your code stays in your repo)</li>
+  <li><strong>Add a skill to a bundled plugin</strong> &mdash; contribute a skill directly to drupal-core or another bundled plugin</li>
+  <li><strong>Report an issue</strong> &mdash; let us know about bugs or problems</li>
+</ol>
+
+<h2>Submitting a Community Plugin</h2>
+
+<p>This is the recommended way to contribute. You keep full ownership of your repo and can iterate freely. Users install your plugin through the drupal-devkit marketplace just like bundled plugins.</p>
+
+<h3>Requirements</h3>
+
+<p>Your plugin repo must have:</p>
+
+<ul>
+  <li><code>.claude-plugin/plugin.json</code> with at least a <code>name</code> field</li>
+  <li>At least one of: <code>skills/</code>, <code>agents/</code>, <code>commands/</code>, or <code>hooks/</code> with content</li>
+  <li>A <code>LICENSE</code> file (or a <code>license</code> field in <code>plugin.json</code>)</li>
+  <li>Valid YAML frontmatter (<code>---</code> delimiters) in all <code>SKILL.md</code> files</li>
+  <li>Valid JSON in <code>hooks/hooks.json</code> (if present)</li>
+</ul>
+
+<h3>How to Submit</h3>
+
+<ol>
+  <li>Fork this repository (or create a merge request from the issue queue)</li>
+  <li>Add your plugin entry to <code>community-registry.json</code>:
+    <pre><code>{
+  "name": "your-plugin-name",
+  "repo": "your-github-user/your-repo",
+  "description": "Brief description (max 256 chars)",
+  "author": "Your Name",
+  "license": "MIT",
+  "category": "development"
+}</code></pre>
+  </li>
+  <li>Open a merge request with a clear description of your plugin</li>
+</ol>
+
+<h3>Naming Rules</h3>
+
+<ul>
+  <li><code>name</code> must be kebab-case (lowercase letters, digits, hyphens)</li>
+  <li>Max 64 characters</li>
+  <li>Must not collide with existing bundled or community plugin names</li>
+</ul>
+
+<h3>What Happens After Merge</h3>
+
+<ol>
+  <li>An automated validation checks your repo structure</li>
+  <li>If validation passes, your plugin is added to <code>marketplace.json</code> and becomes installable</li>
+  <li>A weekly health check verifies your repo remains accessible and valid</li>
+  <li>If your repo goes down, the plugin is temporarily disabled and re-enabled when it comes back</li>
+</ol>
+
+<h3>How Users Install Your Plugin</h3>
+
+<pre><code>/plugin marketplace add AJV009/drupal-devkit
+/plugin install your-plugin-name@drupal-devkit</code></pre>
+
+<h2>Adding a Skill to a Bundled Plugin</h2>
+
+<p>If you want to contribute a skill directly to <code>drupal-core</code> or another bundled plugin:</p>
+
+<ol>
+  <li>Create a directory under <code>plugins/&lt;plugin-name&gt;/skills/&lt;skill-name&gt;/</code></li>
+  <li>Add a <code>SKILL.md</code> file following the <a href="https://agentskills.io/specification">agentskills.io specification</a>:
+    <ul>
+      <li>YAML frontmatter with <code>name</code> (max 64 chars, lowercase + hyphens) and <code>description</code> (max 1024 chars)</li>
+      <li>Markdown body with instructions, examples, and patterns</li>
+      <li>Keep SKILL.md under 500 lines; use <code>references/</code> for detailed content</li>
+    </ul>
+  </li>
+  <li>Optional: add <code>references/</code>, <code>scripts/</code>, or <code>assets/</code> subdirectories</li>
+  <li>Open a merge request</li>
+</ol>
+
+<h3>Skill Quality Guidelines</h3>
+
+<ul>
+  <li>Skills must be <strong>platform-agnostic</strong> &mdash; no references to specific AI tools (Claude Code, Cursor, etc.)</li>
+  <li>Skills must be <strong>standalone</strong> &mdash; they should work without any project-specific context</li>
+  <li>Skills must have proper <strong>attribution</strong> if derived from other work</li>
+  <li>No secrets, API keys, or project-specific paths</li>
+</ul>
+
+<h3>Adding an Existing Community Skill</h3>
+
+<p>If you want to include a skill from an external repository:</p>
+
+<ol>
+  <li>Verify the license allows redistribution (MIT, GPL-2.0, Apache-2.0)</li>
+  <li>Copy the skill directory into the appropriate plugin</li>
+  <li>Add attribution to <code>ATTRIBUTION.md</code></li>
+  <li>Open a merge request</li>
+</ol>
+
+<h2>Reporting Issues</h2>
+
+<p>Open an issue in the issue queue describing the problem, including which plugin or skill is affected.</p>

@@ -1,0 +1,209 @@
+stages:
+  - validate
+  - sync
+
+variables:
+  GIT_DEPTH: 10
+
+# -------------------------------------------------------------------
+# MR Validation: runs on merge requests that touch community-registry.json
+# -------------------------------------------------------------------
+validate-community-plugin-mr:
+  stage: validate
+  image: alpine:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - community-registry.json
+  before_script:
+    - apk add --no-cache jq git bash coreutils
+    - chmod +x .github/scripts/*.sh
+  script:
+    - |
+      # Fetch target branch for comparison
+      git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" --depth=1
+
+      # Get base and current registry
+      BASE_REGISTRY=$(git show "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME:community-registry.json" 2>/dev/null || echo '{"plugins":[]}')
+      MR_REGISTRY=$(cat community-registry.json)
+
+      # Find new plugin names in this MR
+      NEW_NAMES=$(jq -n \
+        --argjson base "$BASE_REGISTRY" \
+        --argjson mr "$MR_REGISTRY" \
+        '[$mr.plugins[] | .name] - [$base.plugins[] | .name] | .[]' -r)
+
+      if [ -z "$NEW_NAMES" ]; then
+        echo "No new community plugin entries found in this MR"
+        exit 0
+      fi
+
+      echo "New entries: $NEW_NAMES"
+
+      # Extract bundled plugin names
+      BUNDLED=$(jq -c '[.plugins[] | select(.source | type == "string") | .name]' .claude-plugin/marketplace.json)
+
+      REGISTRY="community-registry.json"
+      PLUGIN_COUNT=$(jq '.plugins | length' "$REGISTRY")
+      ERRORS=0
+
+      for i in $(seq 0 $((PLUGIN_COUNT - 1))); do
+        ENTRY=$(jq ".plugins[$i]" "$REGISTRY")
+        NAME=$(echo "$ENTRY" | jq -r '.name')
+        REPO=$(echo "$ENTRY" | jq -r '.repo')
+
+        # Skip already-validated entries
+        ENABLED=$(echo "$ENTRY" | jq -r '.enabled // empty')
+        if [ "$ENABLED" = "true" ]; then
+          continue
+        fi
+
+        echo "--- Validating: $NAME ($REPO) ---"
+
+        # Other community names (excluding current)
+        COMMUNITY_NAMES=$(jq -c "[.plugins[] | select(.name != \"$NAME\") | .name]" "$REGISTRY")
+
+        # Step 1: Validate registry entry schema
+        ENTRY_ONLY=$(echo "$ENTRY" | jq '{name, repo, description, author, license, category}')
+        if ! echo "$ENTRY_ONLY" | .github/scripts/validate-registry-entry.sh "$BUNDLED" "$COMMUNITY_NAMES"; then
+          echo "ERROR: Registry entry validation failed for $NAME"
+          ERRORS=$((ERRORS + 1))
+          continue
+        fi
+
+        # Step 2: Shallow clone and validate plugin repo
+        CLONE_DIR=$(mktemp -d)
+        if ! timeout 60 git clone --depth 1 "https://github.com/$REPO.git" "$CLONE_DIR/repo" 2>/dev/null; then
+          echo "ERROR: Failed to clone https://github.com/$REPO — repo may not exist or is private"
+          ERRORS=$((ERRORS + 1))
+          rm -rf "$CLONE_DIR"
+          continue
+        fi
+
+        if ! .github/scripts/validate-plugin-repo.sh "$CLONE_DIR/repo" "$NAME"; then
+          echo "ERROR: Plugin repo validation failed for $NAME"
+          ERRORS=$((ERRORS + 1))
+          rm -rf "$CLONE_DIR"
+          continue
+        fi
+
+        rm -rf "$CLONE_DIR"
+        echo "  PASSED"
+      done
+
+      if [ "$ERRORS" -gt 0 ]; then
+        echo ""
+        echo "ERROR: $ERRORS plugin(s) failed validation. See errors above."
+        exit 1
+      fi
+
+      echo ""
+      echo "All new entries passed validation."
+
+# -------------------------------------------------------------------
+# Community Plugin Sync: runs on main after merge or on weekly schedule
+# -------------------------------------------------------------------
+sync-community-plugins:
+  stage: sync
+  image: alpine:latest
+  resource_group: community-plugin-sync
+  rules:
+    # On push to main when registry changed (post-merge)
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - community-registry.json
+    # Weekly schedule (configure in GitLab: Settings > CI/CD > Schedules)
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  before_script:
+    - apk add --no-cache jq git bash coreutils openssh-client
+    - chmod +x .github/scripts/*.sh
+    # Configure git for committing
+    - git config user.name "GitLab CI"
+    - git config user.email "ci@drupal_devkit"
+    - git remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    # Ensure we're on the actual branch (not detached HEAD)
+    - git checkout "$CI_COMMIT_BRANCH"
+  script:
+    - |
+      REGISTRY="community-registry.json"
+      NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      PLUGIN_COUNT=$(jq '.plugins | length' "$REGISTRY")
+
+      # Extract bundled plugin names
+      BUNDLED=$(jq -c '[.plugins[] | select(.source | type == "string") | .name]' .claude-plugin/marketplace.json)
+
+      for i in $(seq 0 $((PLUGIN_COUNT - 1))); do
+        ENTRY=$(jq ".plugins[$i]" "$REGISTRY")
+        NAME=$(echo "$ENTRY" | jq -r '.name')
+        REPO=$(echo "$ENTRY" | jq -r '.repo')
+
+        echo "--- Validating: $NAME ($REPO) ---"
+
+        COMMUNITY_NAMES=$(jq -c "[.plugins[] | select(.name != \"$NAME\") | .name]" "$REGISTRY")
+
+        # Step 1: Validate registry entry schema
+        ENTRY_ONLY=$(echo "$ENTRY" | jq '{name, repo, description, author, license, category}')
+        if ! echo "$ENTRY_ONLY" | .github/scripts/validate-registry-entry.sh "$BUNDLED" "$COMMUNITY_NAMES"; then
+          echo "  Registry entry validation FAILED"
+          PREV_FAILED=$(echo "$ENTRY" | jq -r '.last_failed // empty')
+          FAILED_TS="${PREV_FAILED:-$NOW}"
+          jq ".plugins[$i].enabled = false | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = \"$FAILED_TS\"" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+          continue
+        fi
+
+        # Step 2: Shallow clone and validate plugin repo
+        CLONE_DIR=$(mktemp -d)
+        if ! timeout 60 git clone --depth 1 "https://github.com/$REPO.git" "$CLONE_DIR/repo" 2>/dev/null; then
+          echo "  Clone FAILED (repo inaccessible or timeout)"
+          PREV_FAILED=$(echo "$ENTRY" | jq -r '.last_failed // empty')
+          FAILED_TS="${PREV_FAILED:-$NOW}"
+          jq ".plugins[$i].enabled = false | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = \"$FAILED_TS\"" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+          rm -rf "$CLONE_DIR"
+          continue
+        fi
+
+        if ! .github/scripts/validate-plugin-repo.sh "$CLONE_DIR/repo" "$NAME"; then
+          echo "  Plugin repo validation FAILED"
+          PREV_FAILED=$(echo "$ENTRY" | jq -r '.last_failed // empty')
+          FAILED_TS="${PREV_FAILED:-$NOW}"
+          jq ".plugins[$i].enabled = false | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = \"$FAILED_TS\"" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+          rm -rf "$CLONE_DIR"
+          continue
+        fi
+
+        rm -rf "$CLONE_DIR"
+
+        echo "  PASSED"
+        jq ".plugins[$i].enabled = true | .plugins[$i].last_checked = \"$NOW\" | .plugins[$i].last_failed = null" "$REGISTRY" > tmp.json && mv tmp.json "$REGISTRY"
+      done
+
+      # Sync marketplace.json
+      .github/scripts/sync-marketplace.sh community-registry.json .claude-plugin/marketplace.json
+
+      # Commit and push if anything changed
+      git add community-registry.json .claude-plugin/marketplace.json
+      if git diff --cached --quiet; then
+        echo "No changes to commit"
+      else
+        git commit -m "chore: sync community plugins [skip ci]"
+        git push origin "$CI_COMMIT_BRANCH"
+      fi
+
+# -------------------------------------------------------------------
+# Tests: runs on MRs that touch scripts
+# -------------------------------------------------------------------
+test-scripts:
+  stage: validate
+  image: alpine:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - .github/scripts/*.sh
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - .github/scripts/*.sh
+  before_script:
+    - apk add --no-cache jq git bash coreutils
+    - chmod +x .github/scripts/*.sh
+  script:
+    - bash .github/scripts/test-sync.sh
