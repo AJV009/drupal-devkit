@@ -1,5 +1,7 @@
 # drupal-devkit
 
+> **This repository has been archived.** Development has moved to Drupal GitLab: [drupal.org/project/drupal_devkit](https://www.drupal.org/project/drupal_devkit). Please open issues and merge requests there.
+
 Drupal development skills, agents, and MCP configs for AI-assisted Drupal development.
 
 A plugin marketplace that bundles **41 curated skills** from the Drupal community into installable plugins. Works with Claude Code, Cursor, Gemini CLI, Kiro CLI, and other AI coding tools that support the [agentskills.io](https://agentskills.io) standard.
