@@ -151,7 +151,13 @@ This marketplace aggregates skills from multiple open-source contributors. See [
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+We welcome contributions from the Drupal community:
+
+- **List your plugin** — Add a ~6-line JSON entry to `community-registry.json`. Your code stays in your repo. See [Submitting a Community Plugin](CONTRIBUTING.md#submitting-a-community-plugin).
+- **Add a skill** — Contribute a skill directly to a bundled plugin. See [Adding a Skill](CONTRIBUTING.md#adding-a-skill-to-a-bundled-plugin).
+- **Report issues** — Open an issue describing the problem and which plugin/skill is affected.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full details.
 
 ## License
 
