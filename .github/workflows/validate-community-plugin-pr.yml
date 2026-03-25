@@ -1,0 +1,110 @@
+name: Validate Community Plugin PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [community-registry.json]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Make scripts executable
+        run: chmod +x .github/scripts/*.sh
+
+      - name: Get changed entries
+        id: diff
+        run: |
+          # Fetch base branch for comparison
+          git fetch origin ${{ github.base_ref }} --depth=1
+
+          # Get new/modified plugin names from the PR diff
+          BASE_REGISTRY=$(git show origin/${{ github.base_ref }}:community-registry.json 2>/dev/null || echo '{"plugins":[]}')
+          PR_REGISTRY=$(cat community-registry.json)
+
+          # Find names in PR that are new or modified vs base
+          NEW_NAMES=$(jq -n \
+            --argjson base "$BASE_REGISTRY" \
+            --argjson pr "$PR_REGISTRY" \
+            '[$pr.plugins[] | .name] - [$base.plugins[] | .name] | .[]' -r)
+
+          if [ -z "$NEW_NAMES" ]; then
+            echo "No new community plugin entries found in this PR"
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New entries: $NEW_NAMES"
+            echo "has_new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract bundled plugin names
+        if: steps.diff.outputs.has_new == 'true'
+        id: bundled
+        run: |
+          NAMES=$(jq -c '[.plugins[] | select(.source | type == "string") | .name]' .claude-plugin/marketplace.json)
+          echo "names=$NAMES" >> "$GITHUB_OUTPUT"
+
+      - name: Validate new entries
+        if: steps.diff.outputs.has_new == 'true'
+        run: |
+          REGISTRY="community-registry.json"
+          BUNDLED='${{ steps.bundled.outputs.names }}'
+          PLUGIN_COUNT=$(jq '.plugins | length' "$REGISTRY")
+          ERRORS=0
+
+          for i in $(seq 0 $((PLUGIN_COUNT - 1))); do
+            ENTRY=$(jq ".plugins[$i]" "$REGISTRY")
+            NAME=$(echo "$ENTRY" | jq -r '.name')
+            REPO=$(echo "$ENTRY" | jq -r '.repo')
+
+            # Skip entries that already have enabled=true (existing validated plugins)
+            ENABLED=$(echo "$ENTRY" | jq -r '.enabled // empty')
+            if [ "$ENABLED" = "true" ]; then
+              continue
+            fi
+
+            echo "--- Validating: $NAME ($REPO) ---"
+
+            # Build list of other community names (excluding current)
+            COMMUNITY_NAMES=$(jq -c "[.plugins[] | select(.name != \"$NAME\") | .name]" "$REGISTRY")
+
+            # Step 1: Validate registry entry schema
+            ENTRY_ONLY=$(echo "$ENTRY" | jq '{name, repo, description, author, license, category}')
+            if ! echo "$ENTRY_ONLY" | .github/scripts/validate-registry-entry.sh "$BUNDLED" "$COMMUNITY_NAMES"; then
+              echo "::error::Registry entry validation failed for $NAME"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+
+            # Step 2: Shallow clone and validate plugin repo
+            CLONE_DIR=$(mktemp -d)
+            if ! timeout 60 git clone --depth 1 "https://github.com/$REPO.git" "$CLONE_DIR/repo" 2>/dev/null; then
+              echo "::error::Failed to clone https://github.com/$REPO — repo may not exist or is private"
+              ERRORS=$((ERRORS + 1))
+              rm -rf "$CLONE_DIR"
+              continue
+            fi
+
+            if ! .github/scripts/validate-plugin-repo.sh "$CLONE_DIR/repo" "$NAME"; then
+              echo "::error::Plugin repo validation failed for $NAME"
+              ERRORS=$((ERRORS + 1))
+              rm -rf "$CLONE_DIR"
+              continue
+            fi
+
+            rm -rf "$CLONE_DIR"
+            echo "  PASSED"
+          done
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo ""
+            echo "::error::$ERRORS plugin(s) failed validation. See errors above."
+            exit 1
+          fi
+
+          echo ""
+          echo "All new entries passed validation."
