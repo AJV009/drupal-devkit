@@ -94,17 +94,24 @@ mkdir -p "$FIXTURE_DIR/bad-hooks-plugin/hooks"
 echo 'not valid json{' > "$FIXTURE_DIR/bad-hooks-plugin/hooks/hooks.json"
 touch "$FIXTURE_DIR/bad-hooks-plugin/LICENSE"
 
-# Create a fixture with no LICENSE
+# Create a fixture with no LICENSE file and no license in plugin.json
 mkdir -p "$FIXTURE_DIR/no-license-plugin/.claude-plugin"
 echo '{"name": "no-license-plugin", "version": "1.0.0"}' > "$FIXTURE_DIR/no-license-plugin/.claude-plugin/plugin.json"
 mkdir -p "$FIXTURE_DIR/no-license-plugin/skills/s1"
 printf -- "---\nname: s1\ndescription: s\n---\nContent" > "$FIXTURE_DIR/no-license-plugin/skills/s1/SKILL.md"
 
+# Create a fixture with no LICENSE file but license field in plugin.json (should pass)
+mkdir -p "$FIXTURE_DIR/license-in-json-plugin/.claude-plugin"
+echo '{"name": "license-in-json-plugin", "version": "1.0.0", "license": "MIT"}' > "$FIXTURE_DIR/license-in-json-plugin/.claude-plugin/plugin.json"
+mkdir -p "$FIXTURE_DIR/license-in-json-plugin/skills/s1"
+printf -- "---\nname: s1\ndescription: s\n---\nContent" > "$FIXTURE_DIR/license-in-json-plugin/skills/s1/SKILL.md"
+
 assert_pass "valid plugin repo passes" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/valid-plugin" "valid-plugin"
 assert_fail "empty plugin (no skills/agents) fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/empty-plugin" "empty-plugin"
 assert_fail "name mismatch fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/mismatch-plugin" "mismatch-plugin"
 assert_fail "invalid hooks.json fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/bad-hooks-plugin" "bad-hooks-plugin"
-assert_fail "missing LICENSE fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/no-license-plugin" "no-license-plugin"
+assert_fail "missing LICENSE and no license field fails" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/no-license-plugin" "no-license-plugin"
+assert_pass "license in plugin.json passes" "$SCRIPT_DIR/validate-plugin-repo.sh" "$FIXTURE_DIR/license-in-json-plugin" "license-in-json-plugin"
 
 rm -rf "$FIXTURE_DIR"
 

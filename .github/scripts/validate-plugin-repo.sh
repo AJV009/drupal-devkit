@@ -73,10 +73,13 @@ if [ -f "$HOOKS_JSON" ]; then
   fi
 fi
 
-# Check LICENSE exists
+# Check LICENSE exists (file or license field in plugin.json)
 if ! ls "$REPO_DIR"/LICENSE* >/dev/null 2>&1; then
-  echo "ERROR: No LICENSE file found"
-  exit 1
+  LICENSE_FIELD=$(jq -r '.license // empty' "$PLUGIN_JSON")
+  if [ -z "$LICENSE_FIELD" ]; then
+    echo "ERROR: No LICENSE file found and no license field in plugin.json"
+    exit 1
+  fi
 fi
 
 echo "OK: Plugin repo validation passed for $EXPECTED_NAME"
