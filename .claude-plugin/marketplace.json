@@ -30,6 +30,15 @@
       "description": "Site migration orchestrator for Acquia Source + Canvas — 15 agents, 8-phase workflow from site analysis to visual verification",
       "source": "./plugins/migrate-drupal-canvas-source",
       "category": "development"
+    },
+    {
+      "name": "drupal-workflow",
+      "description": "3-layer semantic docs, structural index generators, quality gate hooks, and 4 specialized agents",
+      "source": {
+        "source": "github",
+        "repo": "gkastanis/drupal-workflow"
+      },
+      "category": "development"
     }
   ]
 }

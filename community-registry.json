@@ -7,9 +7,9 @@
       "author": "George Kastanis",
       "license": "MIT",
       "category": "development",
-      "enabled": false,
-      "last_checked": "2026-03-25T00:18:08Z",
-      "last_failed": "2026-03-25T00:18:08Z"
+      "enabled": true,
+      "last_checked": "2026-03-25T02:01:39Z",
+      "last_failed": null
     }
   ]
 }
